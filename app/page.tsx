@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Fragment } from "react";
 import { useWallet } from "../hooks/useWallet";
 import { restoreWalletFromMnemonic, restoreWalletFromPrivateKey, createWallet } from "../lib/ethersUtils";
-import { setPassword, isPasswordSet, getPassword, hashPassword, removeEncryptedData } from "../lib/storageUtils";
+import { setPassword, isPasswordSet } from "../lib/storageUtils";
 
 const Page = () => {
   const { setNewWallet } = useWallet({});

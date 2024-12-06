@@ -60,7 +60,7 @@ export const loadEncryptedData = (key: string): WalletData | null => {
 
   try {
     return decryptData(encryptedData, password);
-  } catch (error) {
+  } catch {
     throw new Error("Failed to decrypt data. Password may have changed.");
   }
 };
