@@ -45,6 +45,14 @@ export default function RootLayout({
                 Your Wallet
               </Link>
             </NavbarItem>
+            <NavbarItem>
+              <Link
+                href="/transaction"
+                className={isActive('/transaction') ? 'text-primary font-bold' : 'text-foreground'}
+              >
+                Send Transaction
+              </Link>
+            </NavbarItem>
           </NavbarContent>
         </Navbar>
         <main className="p-8">
