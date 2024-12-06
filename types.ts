@@ -1,0 +1,1 @@
+type WalletData = { mnemonic?: string, privateKey?: string }

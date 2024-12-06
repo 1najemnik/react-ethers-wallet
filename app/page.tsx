@@ -1,101 +1,153 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect, Fragment } from "react";
+import { useWallet } from "../hooks/useWallet";
+import { restoreWalletFromMnemonic, restoreWalletFromPrivateKey, createWallet } from "../lib/ethersUtils";
+import { setPassword, isPasswordSet, getPassword, hashPassword, removeEncryptedData } from "../lib/storageUtils";
+
+const Page = () => {
+  const { setNewWallet } = useWallet({});
+  const [mnemonic, setMnemonic] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
+  const [password, setPasswordInput] = useState("");
+  const [status, setStatus] = useState<string | null>(null);
+  const [isPasswordSaved, setIsPasswordSaved] = useState(false);
+
+  useEffect(() => {
+    setIsPasswordSaved(isPasswordSet());
+  }, []);
+
+  const handleRestoreFromMnemonic = () => {
+    try {
+      if (!mnemonic) {
+        setStatus("Please enter a mnemonic phrase.");
+        return;
+      }
+      const restoredWallet = restoreWalletFromMnemonic(mnemonic);
+      setNewWallet(restoredWallet);
+      setStatus("Wallet restored successfully from mnemonic!");
+    } catch {
+      setStatus("Invalid mnemonic phrase.");
+    }
+  };
+
+  const handleRestoreFromPrivateKey = () => {
+    try {
+      if (!privateKey) {
+        setStatus("Please enter a private key.");
+        return;
+      }
+      const restoredWallet = restoreWalletFromPrivateKey(privateKey);
+      setNewWallet(restoredWallet);
+      setStatus("Wallet restored successfully from private key!");
+    } catch {
+      setStatus("Invalid private key.");
+    }
+  };
+
+  const handleCreateRandomWallet = () => {
+    const newRandomWallet = createWallet();
+    setNewWallet(newRandomWallet);
+    setStatus("Random wallet created successfully!");
+  };
+
+  const handleSavePassword = () => {
+    if (!password) {
+      setStatus("Please enter a password.");
+      return;
+    } 
+    
+    setPassword(password);
+    setIsPasswordSaved(true);
+    setStatus("Password saved successfully!");
+  };
+
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <Fragment>
+      <h1 className="text-3xl font-bold mb-6">Wallet Management</h1>
+      {status && <p className="text-red-500 mb-6">{status}</p>}
+      <div className="border p-4 mb-4 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4">Set Encryption Password</h2>
+        <input
+          type="password"
+          placeholder="Enter password to encrypt your data"
+          value={password}
+          onChange={(e) => setPasswordInput(e.target.value)}
+          className="w-full p-2 border rounded-lg mb-4"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSavePassword();
+            }
+          }}
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <button
+          onClick={handleSavePassword}
+          className="px-4 py-2 bg-purple-500 text-white rounded-lg w-full"
+        >
+          Save Password
+        </button>
+      </div>
+      <div className="flex flex-col gap-8">
+        <div className="border p-4 rounded-lg shadow-md w-full max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Restore Wallet from Mnemonic</h2>
+          <input
+            type="text"
+            placeholder="Enter 12-24 words from the BIP-39 word list"
+            value={mnemonic}
+            onChange={(e) => setMnemonic(e.target.value)}
+            className="w-full p-2 border rounded-lg mb-4"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleRestoreFromMnemonic();
+              }
+            }}
+            disabled={!isPasswordSaved}
+          />
+          <button
+            onClick={handleRestoreFromMnemonic}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg w-full"
+            disabled={!isPasswordSaved}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Restore Wallet
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <div className="border p-4 rounded-lg shadow-md w-full max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Restore Wallet from Private Key</h2>
+          <input
+            type="text"
+            placeholder="Enter private key"
+            value={privateKey}
+            onChange={(e) => setPrivateKey(e.target.value)}
+            className="w-full p-2 border rounded-lg mb-4"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleRestoreFromPrivateKey();
+              }
+            }}
+            disabled={!isPasswordSaved}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <button
+            onClick={handleRestoreFromPrivateKey}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg w-full"
+            disabled={!isPasswordSaved}
+          >
+            Restore Wallet
+          </button>
+        </div>
+        <div className="border p-4 rounded-lg shadow-md w-full max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Create Random Wallet</h2>
+          <button
+            onClick={handleCreateRandomWallet}
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg w-full"
+            disabled={!isPasswordSaved}
+          >
+            Create Random Wallet
+          </button>
+        </div>
+      </div>
+    </Fragment>
   );
-}
+};
+
+export default Page;
