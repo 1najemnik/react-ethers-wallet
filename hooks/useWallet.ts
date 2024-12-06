@@ -6,6 +6,8 @@ import {
   removeEncryptedData,
   isPasswordSet
 } from "../lib/storageUtils";
+import { getProvider } from "@/lib/networkUtils";
+import { getBalance } from "@/lib/ethersUtils";
 
 type WalletInput = {
   mnemonic?: string;
@@ -28,6 +30,36 @@ export const useWallet = ({ }: WalletInput) => {
       }
     }
   };
+
+  useEffect(() => {
+    const network = "polygon";
+    const newProvider = getProvider(network);
+    updateProvider(newProvider);
+  }, []);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        if (wallet && provider) {
+          const newBalance = await getBalance(provider, wallet.address);
+          setBalance(newBalance);
+        }
+      } catch (error) {
+        console.error("Failed to update balance:", error);
+      }
+    };
+
+    fetchBalance();
+
+    const intervalId = setInterval(() => {
+      if (!isPasswordSet()) { 
+        return;
+      }
+      fetchBalance();
+    }, 20000);
+
+    return () => clearInterval(intervalId);
+  }, [wallet, provider]);
 
   useEffect(() => {
     if (!isPasswordSet()) {

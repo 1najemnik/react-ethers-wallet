@@ -2,22 +2,14 @@
 
 import React, { useState, useEffect, Fragment } from "react";
 import { useWallet } from "../../hooks/useWallet";
-import { getBalance, restoreWalletFromMnemonic, restoreWalletFromPrivateKey } from "../../lib/ethersUtils";
+import { restoreWalletFromMnemonic, restoreWalletFromPrivateKey } from "../../lib/ethersUtils";
 import { isPasswordSet, loadEncryptedData } from "../../lib/storageUtils";
-import { getProvider } from "@/lib/networkUtils";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const WalletDataPage = () => {
-  const { wallet, setNewWallet, provider, updateProvider, clearWallet } = useWallet({});
-  const [balance, setBalance] = useState<string | null>(null);
+  const { wallet, setNewWallet, provider, balance, clearWallet } = useWallet({});
   const [status, setStatus] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
-
-  useEffect(() => {
-    const network = "polygon";
-    const newProvider = getProvider(network);
-    updateProvider(newProvider);
-  }, []);
 
   useEffect(() => {
     const loadWalletData = async () => {
@@ -41,10 +33,6 @@ const WalletDataPage = () => {
 
           setNewWallet(restoredWallet);
 
-          if (provider) {
-            const walletBalance = await getBalance(provider, restoredWallet.address);
-            setBalance(walletBalance);
-          }
         } else if (!savedWallet) {
           setStatus("No wallet found in storage or password may have changed.");
         }
@@ -58,31 +46,6 @@ const WalletDataPage = () => {
       loadWalletData();
     }
   }, [provider, wallet, setNewWallet]);
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      try {
-        if (wallet && provider) {
-          const newBalance = await getBalance(provider, wallet.address);
-          setBalance(newBalance);
-        }
-      } catch (error) {
-        console.error("Failed to update balance:", error);
-      }
-    };
-
-    fetchBalance();
-
-    const intervalId = setInterval(() => {
-      if (!isPasswordSet()) {
-        setStatus("Password not set. Cannot update balance.");
-        return;
-      }
-      fetchBalance();
-    }, 20000);
-
-    return () => clearInterval(intervalId);
-  }, [wallet, provider]);
 
   const handleTogglePrivateKey = () => {
     setShowPrivateKey((prev) => !prev);
