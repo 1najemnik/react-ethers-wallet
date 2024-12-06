@@ -30,9 +30,15 @@ export const validateAmount = (amount: string): boolean => {
 
 export const sendTransaction = async (
   wallet: ethers.Wallet | ethers.HDNodeWallet,
+  provider: ethers.JsonRpcProvider,
   to: string,
   amount: string
 ) => {
+
+  if (!wallet.provider) {
+    wallet = wallet.connect(provider);
+  }
+
   const tx = {
     to,
     value: ethers.parseEther(amount),

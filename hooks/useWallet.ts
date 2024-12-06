@@ -15,7 +15,7 @@ type WalletInput = {
 export const useWallet = ({ }: WalletInput) => {
   const [wallet, setWallet] = useState<ethers.Wallet | ethers.HDNodeWallet | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
-  const [provider, setProvider] = useState<ethers.Provider | null>(null);
+  const [provider, setProvider] = useState<ethers.JsonRpcProvider | null>(null);
 
   const [isWalletChanged, setIsWalletChanged] = useState<boolean>(false);
 
@@ -74,7 +74,7 @@ export const useWallet = ({ }: WalletInput) => {
     setIsWalletChanged(false);
   };
 
-  const updateProvider = (newProvider: ethers.Provider) => {
+  const updateProvider = (newProvider: ethers.JsonRpcProvider) => {
     setProvider(newProvider);
   };
 
