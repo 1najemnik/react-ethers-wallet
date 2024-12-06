@@ -1,25 +1,18 @@
 "use client";
 
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useState } from "react";
 import { useWallet } from "../../hooks/useWallet";
-import { sendTransaction } from "../../lib/ethersUtils";
+import { sendTransaction, validateAddress } from "../../lib/ethersUtils";
 import { isPasswordSet } from "../../lib/storageUtils";
 import { FaSpinner } from "react-icons/fa";
-import { getProvider } from "@/lib/networkUtils";
 
 const SendTransactionPage = () => {
-    const { wallet, provider, updateProvider } = useWallet({});
+    const { wallet, provider, balance } = useWallet({});
     const [recipient, setRecipient] = useState<string>("");
     const [amount, setAmount] = useState<string>("");
     const [status, setStatus] = useState<string | null>(null);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
-    useEffect(() => {
-        const network = "polygon";
-        const newProvider = getProvider(network);
-        updateProvider(newProvider);
-    }, []);
 
     const handleSendTransaction = async () => {
         if (!isPasswordSet()) {
@@ -37,6 +30,11 @@ const SendTransactionPage = () => {
             return;
         }
 
+        if (!validateAddress(recipient)) {
+            setStatus("Invalid recipient address.");
+            return;
+        }
+
         if (!provider) {
             setStatus("Provider is not available. Cannot send transaction.");
             return;
@@ -47,16 +45,23 @@ const SendTransactionPage = () => {
             const txResponse = await sendTransaction(wallet, provider, recipient, amount);
             setTxHash(txResponse.hash);
             setStatus("Transaction sent!");
-        } catch (error) {
-            console.error("Failed to send transaction:", error);
-            setStatus("Transaction failed.");
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if ((error as { code?: string }).code) {
+                    setStatus(`Transaction failed: ${(error as { code?: string }).code}`);
+                } else {
+                    setStatus(`Transaction failed: ${error.message}`);
+                }
+            } else {
+                setStatus("Transaction failed: Unknown error.");
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="max-w-md mx-auto mt-8 p-6 border rounded-lg shadow-lg">
+        <div className="max-w-md p-6 border rounded-lg shadow-lg">
             <h1 className="text-2xl font-bold mb-4">Send Transaction</h1>
 
             {wallet ? (
@@ -88,6 +93,14 @@ const SendTransactionPage = () => {
                             placeholder="Enter amount"
                         />
                     </div>
+
+                    {balance && (
+                        <div className="mb-4">
+                            <p className="text-sm font-semibold">
+                                Wallet Balance: {balance} POL
+                            </p>
+                        </div>
+                    )}
 
                     <div className="mb-4">
                         <button
