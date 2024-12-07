@@ -2,28 +2,52 @@
 
 import React, { useState, useEffect, Fragment } from "react";
 import { useWallet } from "../hooks/useWallet";
-import { restoreWalletFromMnemonic, restoreWalletFromPrivateKey, createWallet } from "../lib/ethersUtils";
+import { restoreWalletFromMnemonic } from "../lib/ethersUtils";
 import { setPassword, isPasswordSet } from "../lib/storageUtils";
+import bip39 from "bip39";
 
 const Page = () => {
   const { setNewWallet } = useWallet({});
-  const [mnemonic, setMnemonic] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
   const [password, setPasswordInput] = useState("");
+  const [mnemonicLength, setMnemonicLength] = useState(12);
+  const [mnemonic, setMnemonic] = useState<string[]>(new Array(12).fill(""));
   const [status, setStatus] = useState<string | null>(null);
   const [isPasswordSaved, setIsPasswordSaved] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
     setIsPasswordSaved(isPasswordSet());
-  }, []);
+    fillMnemonicFields(mnemonicLength);
+  }, [mnemonicLength]);
+
+  const generateRandomMnemonic = (length: number): string[] => {
+    const randomMnemonic = bip39.generateMnemonic(length === 12 ? 128 : 256);
+    return randomMnemonic.split(" ");
+  };
+
+  const handleMnemonicChange = (index: number, value: string) => {
+    const updatedMnemonic = [...mnemonic];
+    updatedMnemonic[index] = value.trim().toLowerCase();
+    setMnemonic(updatedMnemonic);
+
+    if (value.length > 2) {
+      const wordSuggestions = bip39.wordlists.english.filter((word) =>
+        word.startsWith(value.toLowerCase())
+      );
+      setSuggestions(wordSuggestions);
+    } else {
+      setSuggestions([]);
+    }
+  };
 
   const handleRestoreFromMnemonic = () => {
+    const fullMnemonic = mnemonic.join(" ");
     try {
-      if (!mnemonic) {
-        setStatus("Please enter a mnemonic phrase.");
+      if (fullMnemonic.split(" ").length !== mnemonicLength) {
+        setStatus(`Please enter ${mnemonicLength} words.`);
         return;
       }
-      const restoredWallet = restoreWalletFromMnemonic(mnemonic);
+      const restoredWallet = restoreWalletFromMnemonic(fullMnemonic);
       setNewWallet(restoredWallet);
       setStatus("Wallet restored successfully from mnemonic!");
     } catch {
@@ -31,37 +55,50 @@ const Page = () => {
     }
   };
 
-  const handleRestoreFromPrivateKey = () => {
-    try {
-      if (!privateKey) {
-        setStatus("Please enter a private key.");
-        return;
-      }
-      const restoredWallet = restoreWalletFromPrivateKey(privateKey);
-      setNewWallet(restoredWallet);
-      setStatus("Wallet restored successfully from private key!");
-    } catch {
-      setStatus("Invalid private key.");
-    }
-  };
-
-  const handleCreateRandomWallet = () => {
-    const newRandomWallet = createWallet();
-    setNewWallet(newRandomWallet);
-    setStatus("Random wallet created successfully!");
-  };
-
   const handleSavePassword = () => {
     if (!password) {
       setStatus("Please enter a password.");
       return;
-    } 
-    
+    }
     setPassword(password);
     setIsPasswordSaved(true);
     setStatus("Password saved successfully!");
   };
 
+  const handleChangeMnemonicLength = (newLength: number) => {
+    setMnemonicLength(newLength);
+    fillMnemonicFields(newLength);
+  };
+
+  const fillMnemonicFields = (length: number) => {
+    const randomMnemonic = generateRandomMnemonic(length);
+    setMnemonic(randomMnemonic);
+  };
+
+  const handlePasteMnemonic = async () => {
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      const words = clipboardText.split(" ");
+      if (words.length === 12 || words.length === 24) {
+        setMnemonic(words);
+        setMnemonicLength(words.length);
+        setStatus(null);
+      } else {
+        setStatus("Invalid mnemonic phrase length. Please ensure the phrase contains 12 or 24 words.");
+      }
+    } catch {
+      setStatus("Failed to read clipboard content.");
+    }
+  };
+
+  const handleCopyMnemonicToClipboard = () => {
+    const mnemonicString = mnemonic.join(" ");
+    navigator.clipboard.writeText(mnemonicString).then(() => {
+      setStatus("Mnemonic copied to clipboard!");
+    }).catch(() => {
+      setStatus("Failed to copy mnemonic to clipboard.");
+    });
+  };
 
   return (
     <Fragment>
@@ -88,62 +125,80 @@ const Page = () => {
           Save Password
         </button>
       </div>
+
       <div className="flex flex-col gap-8">
         <div className="border p-4 rounded-lg shadow-md w-full max-w-md">
           <h2 className="text-xl font-semibold mb-4">Restore Wallet from Mnemonic</h2>
-          <input
-            type="text"
-            placeholder="Enter 12-24 words from the BIP-39 word list"
-            value={mnemonic}
-            onChange={(e) => setMnemonic(e.target.value)}
-            className="w-full p-2 border rounded-lg mb-4"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleRestoreFromMnemonic();
-              }
-            }}
-            disabled={!isPasswordSaved}
-          />
+          <div className="mb-4">
+            <label className="mr-4">Mnemonic Length:</label>
+            <select
+              value={mnemonicLength}
+              onChange={(e) => handleChangeMnemonicLength(Number(e.target.value))}
+              className="p-2 border rounded-lg"
+            >
+              <option value={12}>12 Words</option>
+              <option value={24}>24 Words</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {mnemonic.map((word, index) => (
+              <input
+                key={index}
+                type="text"
+                placeholder={`Word ${index + 1}`}
+                value={word}
+                onChange={(e) => handleMnemonicChange(index, e.target.value)}
+                className="w-full p-2 border rounded-lg"
+                disabled={!isPasswordSaved}
+              />
+            ))}
+          </div>
+          {suggestions.length > 0 && (
+            <div className="absolute bg-white shadow-md w-full max-w-md mt-2 rounded-lg">
+              <ul className="max-h-60 overflow-auto border p-2">
+                {suggestions.map((word, index) => (
+                  <li
+                    key={index}
+                    className="cursor-pointer p-2 hover:bg-gray-200"
+                    onClick={() => {
+                      const updatedMnemonic = [...mnemonic];
+                      updatedMnemonic[mnemonic.findIndex(word => word === "")] = word;
+                      setMnemonic(updatedMnemonic);
+                      setSuggestions([]);
+                    }}
+                  >
+                    {word}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="mb-4">
+            <button
+              onClick={handlePasteMnemonic}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg w-full"
+            >
+              Paste Mnemonic from Clipboard
+            </button>
+          </div>
+
           <button
             onClick={handleRestoreFromMnemonic}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg w-full"
+            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-lg w-full"
             disabled={!isPasswordSaved}
           >
             Restore Wallet
           </button>
-        </div>
-        <div className="border p-4 rounded-lg shadow-md w-full max-w-md">
-          <h2 className="text-xl font-semibold mb-4">Restore Wallet from Private Key</h2>
-          <input
-            type="text"
-            placeholder="Enter private key"
-            value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
-            className="w-full p-2 border rounded-lg mb-4"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleRestoreFromPrivateKey();
-              }
-            }}
-            disabled={!isPasswordSaved}
-          />
-          <button
-            onClick={handleRestoreFromPrivateKey}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg w-full"
-            disabled={!isPasswordSaved}
-          >
-            Restore Wallet
-          </button>
-        </div>
-        <div className="border p-4 rounded-lg shadow-md w-full max-w-md">
-          <h2 className="text-xl font-semibold mb-4">Create Random Wallet</h2>
-          <button
-            onClick={handleCreateRandomWallet}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg w-full"
-            disabled={!isPasswordSaved}
-          >
-            Create Random Wallet
-          </button>
+
+          <div className="mb-4">
+            <button
+              onClick={handleCopyMnemonicToClipboard}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg w-full"
+            >
+              Copy Mnemonic to Clipboard
+            </button>
+          </div>
+
         </div>
       </div>
     </Fragment>
