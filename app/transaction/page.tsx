@@ -1,9 +1,9 @@
 "use client";
 
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useEffect } from "react";
 import { useWallet } from "../../hooks/useWallet";
-import { sendTransaction, validateAddress } from "../../lib/ethersUtils";
-import { isPasswordSet } from "../../lib/storageUtils";
+import { sendTransaction, validateAddress, getBalance } from "../../lib/ethersUtils";
+import { isPasswordSet, loadEncryptedData } from "../../lib/storageUtils";
 import { FaSpinner } from "react-icons/fa";
 
 const SendTransactionPage = () => {
@@ -13,6 +13,37 @@ const SendTransactionPage = () => {
     const [status, setStatus] = useState<string | null>(null);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isBalanceLoading, setIsBalanceLoading] = useState<boolean>(false);
+    const [selectedAddress, setSelectedAddress] = useState<string>("");
+    const [availableAddresses, setAvailableAddresses] = useState<AddressData[]>([]);
+    const [selectedAddressBalance, setSelectedAddressBalance] = useState<string>("");
+
+    useEffect(() => {
+        const walletData = loadEncryptedData("wallet");
+        if (walletData && walletData.addresses) {
+            setAvailableAddresses(walletData.addresses);
+            setSelectedAddress(walletData.addresses[0]?.address || "");
+        }
+    }, []);
+
+    useEffect(() => {
+        const loadBalance = async () => {
+            if (!selectedAddress || !provider) return;
+
+            setIsBalanceLoading(true);
+            try {
+                const balance = await getBalance(provider, selectedAddress);
+                setSelectedAddressBalance(balance);
+            } catch (error) {
+                console.error("Error fetching balance:", error);
+                setSelectedAddressBalance("Error");
+            } finally {
+                setIsBalanceLoading(false);
+            }
+        };
+
+        loadBalance();
+    }, [selectedAddress, provider]);
 
     const handleSendTransaction = async () => {
         if (!isPasswordSet()) {
@@ -40,11 +71,33 @@ const SendTransactionPage = () => {
             return;
         }
 
+        const selectedAccount = availableAddresses.find(
+            (account) => account.address === selectedAddress
+        );
+
+        if (!selectedAccount) {
+            setStatus("Selected address not found.");
+            return;
+        }
+
+        const { path } = selectedAccount;
+
         setIsLoading(true);
         try {
-            const txResponse = await sendTransaction(wallet, provider, recipient, amount);
-            setTxHash(txResponse.hash);
-            setStatus("Transaction sent!");
+            const txResponse = await sendTransaction(
+                wallet,
+                provider,
+                recipient,
+                amount,
+                path
+            );
+            if (txResponse?.hash) {
+                setStatus("Transaction sent!");
+                setTxHash(txResponse.hash);
+
+                const updatedBalance = await getBalance(provider, selectedAddress);
+                setSelectedAddressBalance(updatedBalance);
+            }
         } catch (error: unknown) {
             if (error instanceof Error) {
                 if ((error as { code?: string }).code) {
@@ -66,6 +119,34 @@ const SendTransactionPage = () => {
 
             {wallet ? (
                 <Fragment>
+                    <div className="mb-4">
+                        <label htmlFor="address" className="block text-sm font-semibold">
+                            Select Address
+                        </label>
+                        <select
+                            id="address"
+                            value={selectedAddress}
+                            onChange={(e) => setSelectedAddress(e.target.value)}
+                            className="w-full p-2 border rounded-lg"
+                            disabled={isBalanceLoading}
+                        >
+                            {availableAddresses.map((addressData) => (
+                                <option key={addressData.address} value={addressData.address}>
+                                    {addressData.address}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    {isBalanceLoading ? (
+                        <p className="text-sm font-semibold">Loading balance...</p>
+                    ) : (
+                        <div className="mb-4">
+                            <p className="text-sm font-semibold">
+                                Selected Address Balance: {selectedAddressBalance} POL
+                            </p>
+                        </div>
+                    )}
+
                     <div className="mb-4">
                         <label htmlFor="recipient" className="block text-sm font-semibold">
                             Recipient Address
@@ -116,9 +197,7 @@ const SendTransactionPage = () => {
                         </button>
                     </div>
 
-                    {status && (
-                        <p className="text-center text-sm text-red-500">{status}</p>
-                    )}
+                    {status && <p className="text-center text-sm text-red-500">{status}</p>}
 
                     {txHash && (
                         <div className="mt-4 text-center">
