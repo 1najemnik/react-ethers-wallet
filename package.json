@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@nextui-org/react": "^2.4.8",
+    "bip39": "^3.1.0",
     "crypto-js": "^4.2.0",
     "ethers": "^6.13.4",
     "next": "15.0.3",
