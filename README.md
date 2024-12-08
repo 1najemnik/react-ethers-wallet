@@ -2,6 +2,12 @@
 
 This is a **React-based wallet** built using **Next.js**, designed specifically for managing **Polygon (POL)** cryptocurrency. The application allows users to create and restore wallets, manage multiple child accounts, send transactions, and view balances.
 
+## Live Demo
+
+You can view the live version of the app here:
+
+[https://1najemnik.github.io/react-ethers-wallet](https://1najemnik.github.io/react-ethers-wallet)
+
 ## Features
 
 - **HD Wallet Support**: Create a wallet using a 12/24 word mnemonic phrase, or restore an existing wallet.
