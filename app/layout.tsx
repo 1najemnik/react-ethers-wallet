@@ -22,6 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const basePath = process.env.NODE_ENV === 'production' ? '/react-ethers-wallet' : '';
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
   
   return (
@@ -31,7 +32,7 @@ export default function RootLayout({
           <NavbarContent justify="center" className="gap-8">
             <NavbarItem>
               <Link
-                href="/"
+                href={`${basePath}/`}
                 className={isActive('/') ? 'text-primary font-bold' : 'text-foreground'}
               >
                 Wallet Management
@@ -39,7 +40,7 @@ export default function RootLayout({
             </NavbarItem>
             <NavbarItem>
               <Link
-                href="/wallet"
+                href={`${basePath}/wallet`}
                 className={isActive('/wallet') ? 'text-primary font-bold' : 'text-foreground'}
               >
                 Your Wallet
@@ -47,7 +48,7 @@ export default function RootLayout({
             </NavbarItem>
             <NavbarItem>
               <Link
-                href="/transaction"
+                href={`${basePath}/transaction`}
                 className={isActive('/transaction') ? 'text-primary font-bold' : 'text-foreground'}
               >
                 Send Transaction
