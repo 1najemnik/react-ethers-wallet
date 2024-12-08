@@ -19,10 +19,12 @@ const SendTransactionPage = () => {
     const [selectedAddressBalance, setSelectedAddressBalance] = useState<string>("");
 
     useEffect(() => {
-        const walletData = loadEncryptedData("wallet");
-        if (walletData && walletData.addresses) {
-            setAvailableAddresses(walletData.addresses);
-            setSelectedAddress(walletData.addresses[0]?.address || "");
+        if (isPasswordSet()) {
+            const walletData = loadEncryptedData("wallet");
+            if (walletData && walletData.addresses) {
+                setAvailableAddresses(walletData.addresses);
+                setSelectedAddress(walletData.addresses[0]?.address || "");
+            }
         }
     }, []);
 
