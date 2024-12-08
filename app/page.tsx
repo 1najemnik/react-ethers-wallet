@@ -4,7 +4,7 @@ import React, { useState, useEffect, Fragment } from "react";
 import { useWallet } from "../hooks/useWallet";
 import { restoreWalletFromMnemonic } from "../lib/ethersUtils";
 import { setPassword, isPasswordSet } from "../lib/storageUtils";
-import bip39 from "bip39";
+import { generateMnemonic, wordlists } from 'bip39';
 
 const Page = () => {
   const { setNewWallet } = useWallet({});
@@ -21,7 +21,7 @@ const Page = () => {
   }, [mnemonicLength]);
 
   const generateRandomMnemonic = (length: number): string[] => {
-    const randomMnemonic = bip39.generateMnemonic(length === 12 ? 128 : 256);
+    const randomMnemonic = generateMnemonic(length === 12 ? 128 : 256);
     return randomMnemonic.split(" ");
   };
 
@@ -31,7 +31,7 @@ const Page = () => {
     setMnemonic(updatedMnemonic);
 
     if (value.length > 2) {
-      const wordSuggestions = bip39.wordlists.english.filter((word) =>
+      const wordSuggestions = wordlists.english.filter((word) =>
         word.startsWith(value.toLowerCase())
       );
       setSuggestions(wordSuggestions);
