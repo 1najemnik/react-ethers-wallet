@@ -1,6 +1,6 @@
 # React Ethers Wallet
 
-This is a **React-based wallet** built using **Next.js**, designed specifically for managing **Polygon (POL)** cryptocurrency. The application allows users to create and restore wallets, manage multiple child accounts, send transactions, and view balances.
+This is a **React-based wallet** built using **Next.js**, designed specifically for managing **Polygon (POL)** cryptocurrency. The application allows users to create and restore wallets, manage multiple child accounts, send transactions, view balances, and access a transaction list with links to Polygonscan for detailed transaction information.
 
 ## Live Demo
 
@@ -44,6 +44,25 @@ We welcome contributions! If you would like to contribute to this project, pleas
 
 Before submitting, ensure that your code adheres to the project's coding standards and passes all tests.
 
+## Technologies Used
+
+This project leverages the power of the following technologies:
+
+- **React**: A JavaScript library for building user interfaces.
+- **Next.js**: A React framework for building optimized and production-ready applications.
+- **TypeScript**: A strongly typed programming language that builds on JavaScript.
+- **Ethers.js**: A library for interacting with the Ethereum blockchain and smart contracts.
+- **Polygon**: A blockchain scaling solution for Ethereum.
+- **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
+- **Polygonscan API**: For fetching transaction history and account details from the Polygon network.
+
 ## License
 
 This project is licensed under the **MIT License**.
+
+## Author
+
+This project was created and maintained by:
+
+**[Ilya Gordon](https://github.com/1najemnik)**
+Feel free to reach out at [ilyagdn@gmail.com](mailto:ilyagdn@gmail.com).
