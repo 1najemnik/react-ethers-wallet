@@ -48,13 +48,9 @@ const TransactionHistoryPage = () => {
 
       setIsBalanceLoading(true);
       try {
-        const providerDetails = getProviderDetails();
-        if (!providerDetails || !providerDetails.apiKey) {
-          setError("API Key is required to fetch balance.");
-          return;
-        }
-        const balance = await getBalance(getProvider("polygon"), selectedAddress);
-        setSelectedAddressBalance(balance);
+        const provider = getProvider("polygon");
+        const balance = await getBalance(provider, selectedAddress);
+        setSelectedAddressBalance(`${balance || 0} POL`);
       } catch (error) {
         console.error("Error fetching balance:", error);
         setSelectedAddressBalance("Error");
@@ -190,7 +186,7 @@ const TransactionHistoryPage = () => {
                 <p className="text-sm font-semibold mt-2">Loading balance...</p>
               ) : (
                 <p className="text-sm font-semibold mt-2">
-                  Selected Address Balance: {selectedAddressBalance} POL
+                  Selected Address Balance: {selectedAddressBalance}
                 </p>
               )}
             </div>
