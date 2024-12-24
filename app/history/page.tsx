@@ -10,7 +10,7 @@ const ITEMS_PER_PAGE = 10;
 
 const TransactionHistoryPage = () => {
   const { getProviderDetails, saveProviderDetails } = useWallet({});
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [apiKey, setApiKey] = useState<string>(() => getProviderDetails()?.apiKey || "");
   const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [availableAddresses, setAvailableAddresses] = useState<AddressData[]>([]);
@@ -113,10 +113,12 @@ const TransactionHistoryPage = () => {
         setTransactions([]);
         setError("No transactions found for this address.");
       }
-    } catch (err: any) {
-      setError(
-        err.message || "An unexpected error occurred while fetching transaction history."
-      );
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "An unexpected error occurred while fetching transaction history.");
+      } else {
+        setError("An unexpected error occurred while fetching transaction history.");
+      }
       setTransactions([]);
     } finally {
       setLoading(false);

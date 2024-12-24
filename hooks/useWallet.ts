@@ -87,12 +87,17 @@ export const useWallet = ({ }: WalletInput) => {
   };
 
   const saveProviderDetails = (apiKey: string) => {
-    localStorage.setItem("provider_api_key", apiKey);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("provider_api_key", apiKey);
+    }
   };
 
   const getProviderDetails = () => {
-    const apiKey = localStorage.getItem("provider_api_key");
-    return { apiKey };
+    if (typeof window !== "undefined") {
+      const apiKey = localStorage.getItem("provider_api_key");
+      return { apiKey };
+    }
+    return { apiKey: null };
   };
 
   return {
