@@ -54,6 +54,14 @@ export default function RootLayout({
                 Send Transaction
               </Link>
             </NavbarItem>
+            <NavbarItem>
+              <Link
+                href={`${basePath}/history`}
+                className={isActive('/history') ? 'text-primary font-bold' : 'text-foreground'}
+              >
+                Transaction History
+              </Link>
+            </NavbarItem>
           </NavbarContent>
         </Navbar>
         <main className="p-8">

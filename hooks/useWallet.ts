@@ -4,7 +4,7 @@ import {
   saveEncryptedData,
   loadEncryptedData,
   removeEncryptedData,
-  isPasswordSet
+  isPasswordSet,
 } from "../lib/storageUtils";
 import { getProvider } from "@/lib/networkUtils";
 import { getBalance } from "@/lib/ethersUtils";
@@ -19,6 +19,7 @@ export const useWallet = ({ }: WalletInput) => {
   const [balance, setBalance] = useState<string | null>(null);
   const [provider, setProvider] = useState<ethers.JsonRpcProvider | null>(null);
   const [isWalletChanged, setIsWalletChanged] = useState<boolean>(false);
+
   const initializeProvider = (network: string) => {
     return getProvider(network);
   };
@@ -27,7 +28,17 @@ export const useWallet = ({ }: WalletInput) => {
     if (wallet && wallet.mnemonic) {
       const newProvider = initializeProvider("polygon");
       const balance = await getBalance(newProvider, wallet.address);
-      saveEncryptedData("wallet", { mnemonic: wallet.mnemonic.phrase, addresses: [{ address: wallet.address, privateKey: wallet.privateKey, balance: balance, path: "" }] });
+      saveEncryptedData("wallet", {
+        mnemonic: wallet.mnemonic.phrase,
+        addresses: [
+          {
+            address: wallet.address,
+            privateKey: wallet.privateKey,
+            balance: balance,
+            path: "",
+          },
+        ],
+      });
     }
   };
 
@@ -75,11 +86,22 @@ export const useWallet = ({ }: WalletInput) => {
     setIsWalletChanged(false);
   };
 
+  const saveProviderDetails = (apiKey: string) => {
+    localStorage.setItem("provider_api_key", apiKey);
+  };
+
+  const getProviderDetails = () => {
+    const apiKey = localStorage.getItem("provider_api_key");
+    return { apiKey };
+  };
+
   return {
     wallet,
     setNewWallet,
     balance,
     provider,
     clearWallet,
+    saveProviderDetails,
+    getProviderDetails,
   };
 };

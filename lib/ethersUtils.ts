@@ -9,6 +9,14 @@ export const restoreWalletFromMnemonic = (mnemonic: string): ethers.HDNodeWallet
   return wallet;
 };
 
+export const normalizeAddress = (address: string): string => {
+  try {
+    return ethers.getAddress(address);
+  } catch {
+    throw new Error("Invalid address format");
+  }
+};
+
 export const getWalletAddressFromMnemonic = (
   mnemonic: string,
   startIndex: number
